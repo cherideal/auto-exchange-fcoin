@@ -17,6 +17,6 @@ print(fcoin.get_symbols())
 
 print(fcoin.get_currencies())
 
-fcoin.auth(api, secret)
+fcoin.auth(key, secret)
 
 print(fcoin.get_balance())
