@@ -17,7 +17,7 @@ fcoin.auth(key, secret)
 base_coin = ['ft', 'eth', 'btc', 'usdt']
 symbols = fcoin.get_symbols()
 
-order_limit = {'zileth':10, 'omgeth':0.1, 'icxeth':0.1,
+order_limit = {'fieth':0.001, 'zileth':10, 'omgeth':0.1, 'icxeth':0.1,
                'btmusdt':1, 'bchusdt':0.001, 'aeeth':1,
                'ltcusdt':0.001, 'zrxeth':1, 'xrpusdt':1,
                'bnbusdt':0.1, 'gtcft':1, 'zipeth':200,
@@ -50,7 +50,10 @@ def change2ft(currency, available):
 
         print 'buy currency:%s, symbol:%s, available:%s, amount:%s, cur_price:%s, amount_decimal:%s, price_decimal:%s' \
               % (currency, symbol, available, amount, cur_price, amount_decimal, price_decimal)
-        limit = order_limit[symbol]
+
+        limit = 0.001
+        if symbol in order_limit:
+            limit = order_limit[symbol]
         if limit <= amount:
             result = fcoin.buy(symbol, cur_price, amount)
             print result
@@ -77,7 +80,9 @@ def change2base(currency, available):
             print 'sell currency:%s, symbol:%s, available:%s, amount:%s, cur_price:%s, amount_decimal:%s, price_decimal:%s' \
                   % (currency, symbol, available, amount, cur_price, amount_decimal, price_decimal)
 
-            limit = order_limit[symbol]
+            limit = 0.001
+            if symbol in order_limit:
+                limit = order_limit[symbol]
             if limit <= amount:
                 result = fcoin.sell(symbol, cur_price, amount)
                 print result
