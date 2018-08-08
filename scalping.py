@@ -10,6 +10,7 @@ import pickle
 OP_BUY = 1
 OP_SELL = -1
 OP_NONE = 0
+SIP_UDP_CONNRESET=-1744830452
 
 cf = ConfigParser.ConfigParser()
 try:
@@ -33,6 +34,7 @@ send_queue = Queue.Queue(maxsize=1)
 recv_queue = Queue.Queue(maxsize=1)
 udp_socket=socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 udp_socket.bind((addr, int(server_port)))
+
 serial = 0
 
 class Sender(threading.Thread):
@@ -40,8 +42,8 @@ class Sender(threading.Thread):
         while True:
             data_obj = send_queue.get()
             data = pickle.dumps(data_obj)
-            udp_socket.sendto(data.encode('utf-8'), (ip, peer_port))
-            print('send data=%s to address=%s' %(str(data_obj), ip))
+            udp_socket.sendto(data.encode('utf-8'), (addr, int(peer_port)))
+            print('send data=%s to address=%s' %(str(data_obj), addr))
 
 
 class Receiver(threading.Thread):
@@ -55,6 +57,7 @@ class Receiver(threading.Thread):
 
 class Leader(threading.Thread):
     def run(self):
+        data = {}
         while True:
             balances = fcoin.get_balance()
             datas = balances['data']
@@ -63,10 +66,10 @@ class Leader(threading.Thread):
             if not base_amount and quote_amount:
                 sleep(1)
                 continue
-            data.base_amount = base_amount
-            data.quote_amount = quote_amount
-            data.symbol = symbol
-            data.serial = ++serial
+            data['base_amount'] = base_amount
+            data['quote_amount'] = quote_amount
+            data['symbol'] = symbol
+            data['serial'] = ++serial
 
             send_queue.put(data)
             while True:
@@ -81,6 +84,7 @@ class Leader(threading.Thread):
 
 class Follower(threading.Thread):
     def run(self):
+        send_data = {}
         while True:
             recv_data = recv_queue.get()
             symbol = recv_data.symbol
@@ -94,10 +98,10 @@ class Follower(threading.Thread):
             price = get_price(symbol)
             operate, lots = get_lots(price, base_amount, quote_amount, cur_base_amount, cur_quote_amount)
 
-            send_data.operate = operate
-            send_data.price = price
-            send_data.lots = lots
-            send_data.serial = serial
+            send_data['operate'] = operate
+            send_data['price'] = price
+            send_data['lots'] = lots
+            send_data['serial'] = serial
 
             send_queue.put(send_data)
             scalping(operate, price, lots)
@@ -155,6 +159,9 @@ def get_price(cur_symbol):
 
     return (max_buy + min_sell) / 2
 
+
+def scalping(operate, price, lots):
+    print('operate=%s, price=%s, lots=%s' %(operate, price, lots))
 
 def main():
     sender = Sender()
